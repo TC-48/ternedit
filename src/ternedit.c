@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-void ternedit_init(TerneditState* te) {
+void TerneditInit(TerneditState* te) {
     te->bufSize = 243;
     te->cursorPos = 0;
     te->running = SDL_TRUE;
@@ -30,9 +30,12 @@ void ternedit_init(TerneditState* te) {
     te->groups = te->winW / te->groupWidth;
     if (te->groups < 1) te->groups = 1;
     te->charsPerRow = (size_t) (te->groups * 6);
+
+    te->scrollY = 0;
+    te->scrollTargetY = 0;
 }
 
-void ternedit_free(TerneditState* te) {
+void TerneditFree(TerneditState* te) {
     FreeCharTextures(&te->atlas);
     TTF_CloseFont(te->editorFont.regular);
     TTF_CloseFont(te->editorFont.italic);
@@ -44,7 +47,7 @@ void ternedit_free(TerneditState* te) {
     SDL_Quit();
 }
 
-void _ternedit_handle(TerneditState* te, const SDL_Event* event) {
+void _TerneditHandle(TerneditState* te, const SDL_Event* event) {
     switch (event->type) {
     case SDL_QUIT:
         te->running = SDL_FALSE;
@@ -84,6 +87,38 @@ void _ternedit_handle(TerneditState* te, const SDL_Event* event) {
             break;
         default:;
         }
+        
+        {
+            int lineHeight = te->atlas.charHeight + 5;
+            int cursorRow = te->cursorPos / te->charsPerRow;
+            int cursorY = cursorRow * lineHeight;
+
+            if (cursorY < te->scrollTargetY) {
+                te->scrollTargetY = (float)cursorY;
+            } else if (cursorY + lineHeight > te->scrollTargetY + te->winH) {
+                te->scrollTargetY = (float)(cursorY + lineHeight - te->winH);
+            }
+
+            int totalRows = (te->bufSize + te->charsPerRow - 1) / te->charsPerRow;
+            int totalHeight = totalRows * lineHeight;
+            int maxScroll = totalHeight - te->winH;
+            if (maxScroll < 0) maxScroll = 0;
+            if (te->scrollTargetY > maxScroll) te->scrollTargetY = (float)maxScroll;
+            if (te->scrollTargetY < 0) te->scrollTargetY = 0;
+        }
+        break;
+    case SDL_MOUSEWHEEL:
+        {
+            int lineHeight = te->atlas.charHeight + 5;
+            te->scrollTargetY -= event->wheel.y * lineHeight * 3;
+            
+            int totalRows = (te->bufSize + te->charsPerRow - 1) / te->charsPerRow;
+            int totalHeight = totalRows * lineHeight;
+            int maxScroll = totalHeight - te->winH;
+            if (maxScroll < 0) maxScroll = 0;
+            if (te->scrollTargetY > maxScroll) te->scrollTargetY = (float)maxScroll;
+            if (te->scrollTargetY < 0) te->scrollTargetY = 0;
+        }
         break;
     case SDL_WINDOWEVENT:
         if (event->window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -99,22 +134,38 @@ void _ternedit_handle(TerneditState* te, const SDL_Event* event) {
             te->groups = te->winW / te->groupWidth;
             if (te->groups < 1) te->groups = 1;
             te->charsPerRow = te->groups * 6;
+
+            int lineHeight = te->atlas.charHeight + 5;
+            int cursorRow = te->cursorPos / te->charsPerRow;
+            int cursorY = cursorRow * lineHeight;
+            if (cursorY < te->scrollTargetY) {
+                te->scrollTargetY = (float)cursorY;
+            } else if (cursorY + lineHeight > te->scrollTargetY + te->winH) {
+                te->scrollTargetY = (float)(cursorY + lineHeight - te->winH);
+            }
+
+            int totalRows = (te->bufSize + te->charsPerRow - 1) / te->charsPerRow;
+            int totalHeight = totalRows * lineHeight;
+            int maxScroll = totalHeight - te->winH;
+            if (maxScroll < 0) maxScroll = 0;
+            if (te->scrollTargetY > maxScroll) te->scrollTargetY = (float)maxScroll;
+            if (te->scrollTargetY < 0) te->scrollTargetY = 0;
         }
         break;
     default:;
     }
 }
 
-void _ternedit_update(TerneditState* te, float dt) {
-    (void) te;
-    (void) dt;
+void _TerneditUpdate(TerneditState* te, float dt) {
+    float scrollSpeed = 10.0f;
+    te->scrollY += (te->scrollTargetY - te->scrollY) * dt * scrollSpeed;
 }
 
-void _ternedit_draw(TerneditState* te) {
+void _TerneditDraw(TerneditState* te) {
     SDL_SetRenderDrawColor(te->renderer, 0, 0, 0, 255);
     SDL_RenderClear(te->renderer);
     
-    SDL_Rect rect = { .x = 0, .y = 0, .w = te->atlas.charWidth, .h = te->atlas.charHeight };
+    SDL_Rect rect = { .x = 0, .y = -(int)te->scrollY, .w = te->atlas.charWidth, .h = te->atlas.charHeight };
     for (size_t i = 0; i < te->bufSize; ++i) {
         SDL_Texture* tex = te->atlas.chars[REGULAR][te->buf[i]];
         if (i == te->cursorPos) {
@@ -134,7 +185,7 @@ void _ternedit_draw(TerneditState* te) {
     SDL_RenderPresent(te->renderer);
 }
 
-int ternedit_run(TerneditState* te) {
+int TerneditRun(TerneditState* te) {
     uint32_t lastTick = SDL_GetTicks();
     while (te->running) {
         uint32_t currentTick = SDL_GetTicks();
@@ -143,10 +194,10 @@ int ternedit_run(TerneditState* te) {
 
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            _ternedit_handle(te, &event);
+            _TerneditHandle(te, &event);
         }
-        _ternedit_update(te, dt);
-        _ternedit_draw(te);
+        _TerneditUpdate(te, dt);
+        _TerneditDraw(te);
     }
     return 0;
 }

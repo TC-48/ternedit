@@ -2,8 +2,8 @@
 
 int main() {
     TerneditState state;
-    ternedit_init(&state);
-    int ec = ternedit_run(&state);
-    ternedit_free(&state);
+    TerneditInit(&state);
+    int ec = TerneditRun(&state);
+    TerneditFree(&state);
     return ec;
 }

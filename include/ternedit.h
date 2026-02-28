@@ -38,14 +38,17 @@ typedef struct TerneditState {
     int groups;
     size_t charsPerRow;
 
+    float scrollY;
+    float scrollTargetY;
+
     SDL_bool running;
 } TerneditState;
 
-void ternedit_init(TerneditState* te);
-void ternedit_free(TerneditState* te);
+void TerneditInit(TerneditState* te);
+void TerneditFree(TerneditState* te);
 
-void _ternedit_handle(TerneditState* te, const SDL_Event* event);
-void _ternedit_update(TerneditState* te, float dt);
-void _ternedit_draw(TerneditState* te);
+void _TerneditHandle(TerneditState* te, const SDL_Event* event);
+void _TerneditUpdate(TerneditState* te, float dt);
+void _TerneditDraw(TerneditState* te);
 
-int ternedit_run(TerneditState* te);
+int TerneditRun(TerneditState* te);
