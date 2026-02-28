@@ -6,7 +6,7 @@
 
 #include <unistd.h>
 
-#define DEFAULT_WIN_WIDTH 640
+#define DEFAULT_WIN_WIDTH 680
 #define DEFAULT_WIN_HEIGHT 480
 
 #define MIN_WIN_WIDTH 200
@@ -38,6 +38,13 @@ int main() {
 
     CharTextureAtlas atlas = LoadCharTextures(regular, italic, renderer);
 
+    int winW, winH;
+    SDL_GetWindowSize(window, &winW, &winH);
+    int groupWidth = 6 * atlas.charWidth + 17;
+    int groups = winW / groupWidth;
+    if (groups < 1) groups = 1;
+    size_t charsPerRow = (size_t) (groups * 6);
+
     SDL_bool running = SDL_TRUE;
     while (running) {
         SDL_Event event;
@@ -52,16 +59,16 @@ int main() {
                     if (cursorPos > 0) cursorPos--;
                     break;
                 case SDL_SCANCODE_RIGHT:
-                    if (cursorPos < count) cursorPos++;
+                    if (cursorPos + 1 < count) cursorPos++;
                     break;
                 case SDL_SCANCODE_UP:
-                    if (cursorPos >= 18) {
-                        cursorPos -= 18;
+                    if (cursorPos >= charsPerRow) {
+                        cursorPos -= charsPerRow;
                     }
                     break;
                 case SDL_SCANCODE_DOWN:
-                    if (cursorPos + 18 < count) {
-                        cursorPos += 18;
+                    if (cursorPos + charsPerRow < count) {
+                        cursorPos += charsPerRow;
                     }
                     break;
                 default:;
@@ -78,6 +85,10 @@ int main() {
                         if (h < MIN_WIN_HEIGHT) h = MIN_WIN_HEIGHT;
                         SDL_SetWindowSize(window, w, h);
                     }
+
+                    groups = w / groupWidth;
+                    if (groups < 1) groups = 1;
+                    charsPerRow = groups * 6;
                 }
                 break;
             default:;
@@ -98,7 +109,7 @@ int main() {
             }
             SDL_RenderCopy(renderer, tex, NULL, &rect);
             rect.x += atlas.charWidth + ((i+1) % 6 == 0 ? 17 : 0);
-            if ((i+1) % 18 == 0) {
+            if ((i+1) % charsPerRow == 0) {
                 rect.x = 0;
                 rect.y += atlas.charHeight + 5;
             }
