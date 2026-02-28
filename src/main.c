@@ -71,6 +71,20 @@ int main() {
                         cursorPos += charsPerRow;
                     }
                     break;
+                case SDL_SCANCODE_0:
+                    data[cursorPos] = 0;
+                    if (cursorPos + 1 < count) cursorPos++;
+                    break;
+                case SDL_SCANCODE_1:
+                    data[cursorPos] = 1;
+                    if (cursorPos + 1 < count) cursorPos++;
+                    break;
+                case SDL_SCANCODE_2:
+                    data[cursorPos] = 2;
+                    if (cursorPos + 1 < count) cursorPos++;
+                    break;
+                case SDL_SCANCODE_F:
+                    data[cursorPos] = (data[cursorPos] + 1) % 3;
                 default:;
                 }
                 break;
