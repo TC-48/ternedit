@@ -1,4 +1,6 @@
-#include <SDL2/SDL.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_ttf.h>
 
 #include <ch-atlas.h>
 
@@ -15,12 +17,17 @@
 typedef uint8_t TritState;
 
 int main() {
-    TritState data[1024] = { 1, 0, 2, 1, 0, 1, 1, 2, 0, 1, 2, 2, 2, 1, 0, 2 };
-    size_t count = 16;
+    TritState data[1024];
+    size_t count = 80;
+    for (size_t i = 0; i < count; ++i) {
+        data[i] = rand() % 3;
+    }
+
+    size_t cursorPos = 0;
 
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
-    SDL_Window* window = SDL_CreateWindow("ternedit", 0, 0, DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow("ternedit", 0, 0, DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, SDL_WINDOW_RESIZABLE|SDL_RENDERER_PRESENTVSYNC);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     TTF_Font* regular = TTF_OpenFont("assets/fonts/monogram/ttf/monogram.ttf", DEFAULT_FONT_SIZE);
@@ -38,6 +45,27 @@ int main() {
             switch (event.type) {
             case SDL_QUIT:
                 running = SDL_FALSE;
+                break;
+            case SDL_KEYUP:
+                switch (event.key.keysym.scancode) {
+                case SDL_SCANCODE_LEFT:
+                    if (cursorPos > 0) cursorPos--;
+                    break;
+                case SDL_SCANCODE_RIGHT:
+                    if (cursorPos < count) cursorPos++;
+                    break;
+                case SDL_SCANCODE_UP:
+                    if (cursorPos >= 18) {
+                        cursorPos -= 18;
+                    }
+                    break;
+                case SDL_SCANCODE_DOWN:
+                    if (cursorPos + 18 < count) {
+                        cursorPos += 18;
+                    }
+                    break;
+                default:;
+                }
                 break;
             case SDL_WINDOWEVENT:
                 if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -60,8 +88,20 @@ int main() {
         SDL_RenderClear(renderer);
         SDL_Rect rect = { .x = 0, .y = 0, .w = atlas.charWidth, .h = atlas.charHeight };
         for (size_t i = 0; i < count; ++i) {
-            SDL_RenderCopy(renderer, atlas.chars[REGULAR][data[i]], NULL, &rect);
+            SDL_Texture* tex = atlas.chars[REGULAR][data[i]];
+            if (i == cursorPos) {
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderFillRect(renderer, &rect);
+                SDL_SetTextureColorMod(tex, 0, 0, 0);
+            } else {
+                SDL_SetTextureColorMod(tex, 255, 255, 255);
+            }
+            SDL_RenderCopy(renderer, tex, NULL, &rect);
             rect.x += atlas.charWidth + ((i+1) % 6 == 0 ? 17 : 0);
+            if ((i+1) % 18 == 0) {
+                rect.x = 0;
+                rect.y += atlas.charHeight + 5;
+            }
         }
         SDL_RenderPresent(renderer);
     }
