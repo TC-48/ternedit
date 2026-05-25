@@ -9,6 +9,7 @@
 #include <tritstate.h>
 
 #include <ch-atlas.h>
+#include <tdoc.h>
 
 #define DEFAULT_WIN_WIDTH 680
 #define DEFAULT_WIN_HEIGHT 480
@@ -19,8 +20,7 @@
 #define DEFAULT_FONT_SIZE 88
 
 typedef struct TerneditState {
-    TritState buf[1024];
-    size_t bufSize;
+    TernDocument* doc;
     size_t cursorPos;
 
     SDL_Window* win;
