@@ -366,13 +366,13 @@ void TernDocSave(const TernDocument* doc, const char* path) {
 
     for (size_t i = 0; i < tryteCount; ++i) {
         uint16_t tryte = 0;
-        uint16_t p3 = 1;
+        uint16_t p3 = 243;
         for (int j = 0; j < 6; ++j) {
             size_t pos = i * 6 + j;
             if (pos < totalTrits) {
                 tryte += (uint16_t)TernDocAt(doc, pos) * p3;
             }
-            p3 *= 3;
+            p3 /= 3;
         }
         fwrite(&tryte, 2, 1, f);
     }

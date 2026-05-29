@@ -5,7 +5,7 @@
 #include <time.h>
 
 void TerneditInit(TerneditState* te) {
-    size_t initialSize = 243;
+    size_t initialSize = 10;
     TritState* initialBuf = (TritState*)malloc(initialSize);
     for (size_t i = 0; i < initialSize; ++i) {
         initialBuf[i] = rand() % 3;
